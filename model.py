@@ -1,9 +1,11 @@
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, Dense, Flatten, Dropout, Lambda
-from tensorflow.keras.optimizers import Adam
+Sequential = tf.keras.Sequential
+Conv2D = tf.keras.layers.Conv2D
+Dense = tf.keras.layers.Dense
+Flatten = tf.keras.layers.Flatten
+Dropout = tf.keras.layers.Dropout
+Lambda = tf.keras.layers.Lambda
+Adam = tf.keras.optimizers.Adam
 
 def nvidia_model():
     model = Sequential()
@@ -27,7 +29,7 @@ def nvidia_model():
     model.add(Dense(10, activation='relu'))
     model.add(Dense(1))
     
-    optimizer = Adam(lr=1e-4)
+    optimizer = Adam(learning_rate=1e-4)
     model.compile(loss='mse', optimizer=optimizer)
     
     return model
