@@ -8,7 +8,7 @@ DATA_PATH = 'data/'
 CORRECTION = 0.2  # Steering correction for left and right images
 
 def load_data():
-    data = pd.read_csv(DATA_PATH + 'driving_log_balanced.csv') 
+    data = pd.read_csv(DATA_PATH + 'balanced_driving_log.csv') 
     return train_test_split(data, test_size=0.2, random_state=42)
 
 def preprocess_image(image):
