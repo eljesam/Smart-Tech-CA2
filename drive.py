@@ -11,7 +11,11 @@ import eventlet.wsgi
 from flask import Flask
 from PIL import Image
 
+import keras
+keras.config.enable_unsafe_deserialization()
+
 from tensorflow.keras.models import load_model
+
 
 def preprocess_image(img_bgr):
     img_bgr = img_bgr[60:135, :, :]  # Crop the image
@@ -20,7 +24,7 @@ def preprocess_image(img_bgr):
     img_yuv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YUV)
     return img_yuv
 
-sio = socketio.Server()
+sio = socketio.Server(cors_allowed_origins='*')
 app = Flask(__name__)
 model = None
 
@@ -65,23 +69,27 @@ def telemetry(sid, data):
         throttle = 0.15
         
     send_control(steering_angle, throttle)
+
+def main():
+    global model
     
-    def main():
-        global model
+    parser = argparse.ArgumentParser(description='Remote Driving')
+    parser.add_argument(
+        'model',
+        type=str,
+        help='Path to model h5 file. Model should be on the same path.'
+    )
+    args = parser.parse_args()
+    
+    print("Loading model from ", args.model)
+    model = load_model(args.model, compile=False, safe_mode=False)
+    
+    app_wrapped = socketio.Middleware(sio, app)
+    
+    print("Starting server on port 4567...")
+
+    eventlet.wsgi.server(eventlet.listen(('', 4567)), app_wrapped)
+
+if __name__ == '__main__':
+    main()
         
-        parser = argparse.ArgumentParser(description='Remote Driving')
-        parser.add_argument(
-            'model',
-            type=str,
-            help='Path to model h5 file. Model should be on the same path.'
-        )
-        args = parser.parse_args()
-        
-        print("Loading model from ", args.model)
-        model = load_model(args.model)
-        
-        app_wrapped = socketio.Middleware(sio, app)
-        eventlet.wsgi.server(eventlet.listen(('', 4567)), app_wrapped)
-        
-    if __name__ == '__main__':
-        main()

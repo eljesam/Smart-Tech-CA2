@@ -4,14 +4,14 @@ Conv2D = tf.keras.layers.Conv2D
 Dense = tf.keras.layers.Dense
 Flatten = tf.keras.layers.Flatten
 Dropout = tf.keras.layers.Dropout
-Lambda = tf.keras.layers.Lambda
+Rescaling = tf.keras.layers.Rescaling
 Adam = tf.keras.optimizers.Adam
 
 def nvidia_model():
     model = Sequential()
 
     # Normalization layer
-    model.add(Lambda(lambda x: x / 127.5 - 1.0, input_shape=(66, 200, 3)))
+    model.add(Rescaling(1./255, offset=-0.5, input_shape=(66,200,3)))
     
     # Convolutional layers
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
