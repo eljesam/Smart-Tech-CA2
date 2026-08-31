@@ -38,3 +38,42 @@ def resize_image(image):
         image,
         (200, 66)
     )
+
+#Colour conversion
+def convert_to_yuv(image):
+    
+
+    return cv2.cvtColor(
+        image,
+        cv2.COLOR_RGB2YUV
+    )
+
+#Preprocessing Image
+def preprocess_image(image):
+    
+
+    image = crop_image(image)
+
+    image = resize_image(image)
+
+    image = convert_to_yuv(image)
+
+    return image
+
+if __name__ == "__main__":
+
+    import pandas as pd
+
+    CSV_PATH = DATA_DIR / "driving_log_balanced.csv"
+
+    df = pd.read_csv(CSV_PATH)
+
+    image = load_image(
+        df.iloc[0]["center"]
+    )
+
+    print("Original shape:", image.shape)
+
+    processed = preprocess_image(image)
+
+    print("Processed shape:", processed.shape)
