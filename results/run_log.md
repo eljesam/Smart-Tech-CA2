@@ -138,12 +138,114 @@ Observation:
 The additional targeted corner data produced a substantial reduction in
 validation error without increasing model complexity.
 
-### Simulator Test - Track 2
-Status: Not tested yet
+Settings:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+- Steering bias: 0.0
+
+Result:
+- The vehicle successfully passed the first turn.
+- The vehicle also successfully passed the second turn that caused Run 1 to fail.
+- After the second turn, the vehicle showed a persistent tendency to remain too far left.
+- On the straight section, the vehicle gradually moved further left and eventually left the track.
+
+Observation:
+Run 2 substantially improved cornering performance compared with Run 1,
+but introduced a left-steering bias on straighter sections.
+
+### Simulator Test 2
+Settings:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+- Steering bias: +0.03
+
+Result:
+- The vehicle failed at the second turn again.
+
+Observation:
+Adding a positive steering bias reduced the model's ability to make the
+required left turn.
+
+### Simulator Test 3
+Settings:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+- Steering bias: +0.05
+
+Result:
+- The vehicle again failed at the second turn.
+
+Observation:
+Increasing the steering bias further did not solve the straight-road drift
+and negatively affected cornering performance.
+
+### Run 2 Conclusion
+Run 2 was a clear improvement over Run 1 because the model learned to
+successfully negotiate both of the first two major corners. However, the
+model developed a persistent left bias on straight sections.
+
+Attempts to correct this using a fixed steering bias caused the model to
+under-steer at the second turn. This indicated that a fixed correction in
+drive.py was not an appropriate solution.
+
+Run 3 therefore focuses on retaining more near-straight training examples
+while preserving the improved corner data from Run 2.
+
+### Run 3 - Simulator Test 1
+
+Settings:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+- Steering bias: 0.0
+
+Result:
+- Vehicle eventually left the road and became stuck on the grass.
 
 Observations:
-- To be completed after autonomous driving test.
+- First turn: TBD
+- Second turn: TBD
+- Straight section: TBD
+- Failure location: TBD
 
-### Changes Planned for Run 2
-To be decided based on simulator performance.
+## Run 3 - Increased Straight-Driving Samples
+
+### Changes from Run 2
+- Retained more near-straight driving samples during dataset balancing.
+- Increased maximum retained near-straight samples from 1,000 to 1,800.
+- Kept the CNN architecture, augmentation and other training parameters unchanged.
+
+### Training Results
+- Best validation loss: approximately 0.098
+- This was lower than both Run 1 and Run 2.
+
+### Simulator Test
+Settings:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+- Steering bias: 0.0
+
+Result:
+- The vehicle successfully passed the first turn.
+- On approaching the second turn, the vehicle continued approximately straight.
+- The vehicle failed to apply sufficient steering and left the track.
+
+### Conclusion
+Although Run 3 achieved the lowest validation loss, its simulator performance
+was worse than Run 2 at the second corner.
+
+Increasing the number of straight-driving samples reduced the previous
+left-steering bias but also reduced the model's responsiveness to the
+important corner.
+
+This demonstrates that validation loss alone is not sufficient to assess
+the driving model. Simulator testing is also required.
+
+Run 4 will use an intermediate number of near-straight samples in an attempt
+to retain both the improved cornering behaviour of Run 2 and better
+straight-road stability.
 
