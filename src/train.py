@@ -146,7 +146,7 @@ def validation_generator(dataframe, batch_size=32):
 
 # Load dataset
 print("\n========================================")
-print("RUN 5 TRAINING")
+print("RUN 6 TRAINING")
 print("========================================")
 
 print("\nLoading dataset:")
