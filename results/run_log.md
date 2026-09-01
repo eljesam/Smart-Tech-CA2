@@ -116,6 +116,28 @@ accurate representation of the second corner.
 Run 2 will therefore focus on improving the training data rather than
 further increasing the steering gain.
 
+## Run 2 - Targeted Corner Data
+
+Changes from Run 1:
+- Added targeted training data from the second corner on Track 1
+- Added recovery examples around the problematic corner
+- Changed balancing strategy to preserve turning samples while reducing
+  excessive near-straight samples
+- CNN architecture and major training hyperparameters remained unchanged
+
+Training result:
+- Training stopped after approximately 5 epochs
+- Best validation loss: approximately 0.123
+- Best validation performance occurred around Epoch 2
+
+Comparison:
+Run 1 best validation loss: 0.1697
+Run 2 best validation loss: ~0.123
+
+Observation:
+The additional targeted corner data produced a substantial reduction in
+validation error without increasing model complexity.
+
 ### Simulator Test - Track 2
 Status: Not tested yet
 
