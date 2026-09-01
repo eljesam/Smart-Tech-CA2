@@ -32,8 +32,10 @@ MODEL_PATH = (
 )
 
 #Driving settings
-TARGET_SPEED = 12.0
+TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.20
+
+STEERING_GAIN = 2.0
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
@@ -103,6 +105,11 @@ def telemetry(sid, data):
         prediction[0][0]
     )
 
+    steering_angle = np.clip(
+        steering_angle,
+        -1.0,
+        1.0
+    )
     # Simple speed controller
     if speed < TARGET_SPEED:
         throttle = THROTTLE_VALUE
