@@ -48,10 +48,26 @@ increase. Early stopping prevented further unnecessary training and restored
 the best model weights.
 
 ### Simulator Test - Track 1
-Status: Not tested yet
+
+Target speed: 12
+Throttle: 0.20
+
+Result:
+Failed to complete Track 1.
 
 Observations:
-- To be completed after autonomous driving test.
+- The vehicle moved successfully in Autonomous Mode.
+- The vehicle initially drove approximately straight.
+- At the first major turn, the model did not apply sufficient steering.
+- The vehicle continued straight, left the track and entered the water.
+
+Likely issue:
+The predicted steering values appear too weak for significant corners.
+
+Changes considered:
+- Investigate the magnitude of the predicted steering values.
+- Test a steering gain before retraining.
+- If necessary, add more targeted corner data or adjust model/training parameters.
 
 ### Simulator Test - Track 2
 Status: Not tested yet
@@ -61,3 +77,4 @@ Observations:
 
 ### Changes Planned for Run 2
 To be decided based on simulator performance.
+
