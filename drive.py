@@ -36,7 +36,7 @@ TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.20
 
 STEERING_GAIN = 1.0
-STEERING_BIAS = 0.03
+STEERING_BIAS = 0.0
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
