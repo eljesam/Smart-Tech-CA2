@@ -249,3 +249,22 @@ Run 4 will use an intermediate number of near-straight samples in an attempt
 to retain both the improved cornering behaviour of Run 2 and better
 straight-road stability.
 
+## Run 4 - Intermediate Straight-Sample Balance
+
+### Change
+- Retained 1,400 near-straight samples.
+- All other model and training parameters remained unchanged.
+
+### Simulator Result
+- The vehicle failed at the first turn.
+- This was worse than both Run 2 and Run 3.
+
+### Conclusion
+Using an intermediate number of straight-driving samples did not produce the
+expected compromise between cornering and straight-road stability.
+
+Run 2 remains the strongest model based on simulator testing because it
+successfully negotiated both early corners.
+
+Further dataset balancing changes were therefore stopped and attention was
+returned to the specific straight-road drift observed in Run 2.

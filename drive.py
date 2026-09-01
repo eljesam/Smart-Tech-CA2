@@ -28,15 +28,15 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = (
     BASE_DIR
     / "models"
-    / "self_driving_model_run3.keras"
+    / "self_driving_model_run2.keras"
 )
 
 #Driving settings
-TARGET_SPEED = 20.0
-THROTTLE_VALUE = 0.20
+TARGET_SPEED = 8.0
+THROTTLE_VALUE = 0.15
 
 STEERING_GAIN = 1.0
-STEERING_BIAS = 0.0
+STEERING_DEADZONE = 0.03
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
@@ -102,17 +102,24 @@ def telemetry(sid, data):
         verbose=0
     )
 
-    steering_angle = float(
+    raw_steering = float(
         prediction[0][0]
     )
+
+    steering_angle = raw_steering
+
+    if abs(steering_angle) < STEERING_DEADZONE:
+     steering_angle = 0.0
+
     steering_angle *= STEERING_GAIN
-    steering_angle += STEERING_BIAS
+   
 
     steering_angle = np.clip(
         steering_angle,
         -1.0,
         1.0
     )
+
     # Simple speed controller
     if speed < TARGET_SPEED:
         throttle = THROTTLE_VALUE
@@ -121,6 +128,7 @@ def telemetry(sid, data):
 
     print(
         f"Speed: {speed:6.2f} | "
+        f"Raw: {raw_steering:7.4f} | "
         f"Steering: {steering_angle:7.4f} | "
         f"Throttle: {throttle:.2f}"
     )
