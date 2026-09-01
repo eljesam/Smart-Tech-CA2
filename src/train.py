@@ -1,8 +1,9 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -11,48 +12,38 @@ from preprocessing import load_image, preprocess_image
 from augmentation import augment_sample
 from model import build_model
 
-from keras.models import load_model
-from keras.optimizers import Adam
-
-# Project paths
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data" / "raw"
 MODEL_DIR = BASE_DIR / "models"
 
-CSV_PATH = DATA_DIR / "driving_log_run6_finetune.csv"
-
-BASE_MODEL_PATH = (
-    MODEL_DIR / "self_driving_model_run2.keras"
-)
+CSV_PATH = DATA_DIR / "driving_log_final_combined.csv"
 
 MODEL_PATH = (
-    MODEL_DIR / "self_driving_model_run6.keras"
+    MODEL_DIR / "self_driving_model_final.keras"
 )
 
 PLOT_PATH = (
-    MODEL_DIR / "training_loss_run6.png"
+    MODEL_DIR / "training_loss_final.png"
+)
+
+MODEL_DIR.mkdir(
+    parents=True,
+    exist_ok=True
 )
 
 
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
-
-
-
-# Training settings
-
 BATCH_SIZE = 32
-EPOCHS = 8
+EPOCHS = 20
 VALIDATION_SPLIT = 0.20
-
 RANDOM_STATE = 42
 
-# Training generator
 
-
-def training_generator(dataframe, batch_size=32):
+def training_generator(
+    dataframe,
+    batch_size=32
+):
 
     while True:
 
@@ -61,7 +52,6 @@ def training_generator(dataframe, batch_size=32):
 
         for _ in range(batch_size):
 
-            # Randomly select a row
             index = np.random.randint(
                 0,
                 len(dataframe)
@@ -69,14 +59,21 @@ def training_generator(dataframe, batch_size=32):
 
             row = dataframe.iloc[index]
 
-            # Apply augmentation
-            image, steering = augment_sample(row)
+            image, steering = augment_sample(
+                row
+            )
 
-            # Apply image preprocessing
-            image = preprocess_image(image)
+            image = preprocess_image(
+                image
+            )
 
-            images.append(image)
-            steering_angles.append(steering)
+            images.append(
+                image
+            )
+
+            steering_angles.append(
+                steering
+            )
 
         X_batch = np.array(
             images,
@@ -91,32 +88,31 @@ def training_generator(dataframe, batch_size=32):
         yield X_batch, y_batch
 
 
-# Validation generator
+def validation_generator(
+    dataframe,
+    batch_size=32
+):
 
+    current_index = 0
 
-def validation_generator(dataframe, batch_size=32):
- 
- current_index = 0
-
- while True:
+    while True:
 
         images = []
         steering_angles = []
 
         for _ in range(batch_size):
 
-            # Restart from beginning when end is reached
             if current_index >= len(dataframe):
                 current_index = 0
 
-            row = dataframe.iloc[current_index]
+            row = dataframe.iloc[
+                current_index
+            ]
 
-            # Load center camera image
             image = load_image(
                 row["center"]
             )
 
-            # Apply preprocessing only
             image = preprocess_image(
                 image
             )
@@ -125,8 +121,13 @@ def validation_generator(dataframe, batch_size=32):
                 row["steering"]
             )
 
-            images.append(image)
-            steering_angles.append(steering)
+            images.append(
+                image
+            )
+
+            steering_angles.append(
+                steering
+            )
 
             current_index += 1
 
@@ -143,18 +144,19 @@ def validation_generator(dataframe, batch_size=32):
         yield X_batch, y_batch
 
 
-
-# Load dataset
 print("\n========================================")
-print("RUN 6 TRAINING")
+print("FINAL MODEL TRAINING")
+print("TRACK 1 + TRACK 2")
 print("========================================")
 
 print("\nLoading dataset:")
 print(CSV_PATH)
 
+
 if not CSV_PATH.exists():
+
     raise FileNotFoundError(
-        f"Run 5 dataset was not found:\n{CSV_PATH}"
+        f"Final dataset not found:\n{CSV_PATH}"
     )
 
 
@@ -167,10 +169,10 @@ print("\nDataset loaded successfully.")
 print("Total samples:", len(df))
 
 print("\nDataset columns:")
-print(df.columns.tolist())
+print(
+    df.columns.tolist()
+)
 
-
-# Train / validation split
 
 train_df, validation_df = train_test_split(
     df,
@@ -180,7 +182,6 @@ train_df, validation_df = train_test_split(
 )
 
 
-# Reset indexes
 train_df = train_df.reset_index(
     drop=True
 )
@@ -188,6 +189,8 @@ train_df = train_df.reset_index(
 validation_df = validation_df.reset_index(
     drop=True
 )
+
+
 print("\n========================================")
 print("DATA SPLIT")
 print("========================================")
@@ -202,6 +205,7 @@ print(
     len(validation_df)
 )
 
+
 train_generator = training_generator(
     train_df,
     BATCH_SIZE
@@ -211,8 +215,6 @@ val_generator = validation_generator(
     validation_df,
     BATCH_SIZE
 )
-
-# Calculate training steps
 
 
 steps_per_epoch = max(
@@ -226,8 +228,10 @@ validation_steps = max(
 )
 
 
-print("\nSteps per epoch:",
-      steps_per_epoch)
+print(
+    "\nSteps per epoch:",
+    steps_per_epoch
+)
 
 print(
     "Validation steps:",
@@ -235,24 +239,14 @@ print(
 )
 
 
-# Build model
+print("\n========================================")
+print("BUILDING FINAL MODEL")
+print("========================================")
 
 
-print("\nBuilding model...\n")
+model = build_model()
 
-model = load_model(
-    BASE_MODEL_PATH,
-    compile=False
-)
-
-model.compile(
-    optimizer=Adam(learning_rate=0.00001),
-    loss="mse"
-)
-
-
-
-# Callbacks
+model.summary()
 
 
 early_stopping = EarlyStopping(
@@ -270,46 +264,33 @@ model_checkpoint = ModelCheckpoint(
     verbose=1
 )
 
+
 callbacks = [
     early_stopping,
     model_checkpoint
 ]
 
 
-
-
-# Train model
-
-
-print("\nStarting training...\n")
+print("\n========================================")
+print("STARTING TRAINING")
+print("========================================")
 
 
 history = model.fit(
-
     train_generator,
-
     steps_per_epoch=steps_per_epoch,
-
     validation_data=val_generator,
-
     validation_steps=validation_steps,
-
     epochs=EPOCHS,
-
     callbacks=callbacks,
-
     verbose=1
 )
 
 
-# Save final model
+model.save(
+    MODEL_PATH
+)
 
-model.save(MODEL_PATH)
-
-print("\nModel saved to:")
-print(MODEL_PATH)
-
-# Training statistics
 
 training_loss = history.history[
     "loss"
@@ -321,14 +302,17 @@ validation_loss = history.history[
 
 
 best_epoch = (
-    np.argmin(validation_loss) + 1
+    np.argmin(validation_loss)
+    + 1
 )
 
 best_validation_loss = np.min(
     validation_loss
 )
+
+
 print("\n========================================")
-print("RUN 5 RESULTS")
+print("FINAL TRAINING RESULTS")
 print("========================================")
 
 print(
@@ -346,8 +330,6 @@ print(
     f"{best_validation_loss:.6f}"
 )
 
-# Plot training and validation loss
-
 
 plt.figure(
     figsize=(10, 6)
@@ -364,7 +346,7 @@ plt.plot(
 )
 
 plt.title(
-    "Run 5 - Training and Validation Loss"
+    "Final Model - Track 1 + Track 2 Training Loss"
 )
 
 plt.xlabel(
@@ -381,36 +363,33 @@ plt.grid(True)
 
 plt.tight_layout()
 
-
 plt.savefig(
     PLOT_PATH
 )
 
-
 print("\nTraining graph saved:")
 print(PLOT_PATH)
-
 
 plt.show()
 
 
-
-# Print training summary
-
 print("\n========================================")
-print("RUN 5 TRAINING COMPLETE")
+print("FINAL MODEL TRAINING COMPLETE")
 print("========================================")
 
 print(
-    f"Training samples: {len(train_df)}"
+    f"Training samples: "
+    f"{len(train_df)}"
 )
 
 print(
-    f"Validation samples: {len(validation_df)}"
+    f"Validation samples: "
+    f"{len(validation_df)}"
 )
 
 print(
-    f"Best epoch: {best_epoch}"
+    f"Best epoch: "
+    f"{best_epoch}"
 )
 
 print(
@@ -419,9 +398,11 @@ print(
 )
 
 print(
-    f"Model: {MODEL_PATH.name}"
+    f"Model: "
+    f"{MODEL_PATH.name}"
 )
 
 print(
-    f"Loss graph: {PLOT_PATH.name}"
+    f"Loss graph: "
+    f"{PLOT_PATH.name}"
 )
