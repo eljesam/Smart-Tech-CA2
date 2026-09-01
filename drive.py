@@ -19,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = (
     BASE_DIR
     / "models"
-    / "self_driving_model_run2.keras"
+    /  "self_driving_model_final.keras"
 )
 
 TARGET_SPEED = 8.0

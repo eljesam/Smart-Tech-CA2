@@ -295,3 +295,37 @@ behaviour enough to reduce the model's ability to negotiate the first corner.
 
 This again demonstrates that validation loss alone is not sufficient to select
 the final driving model.
+
+## Final Combined Model - Track 2 Test
+
+The final CNN was trained using 4,778 driving samples from both Track 1
+and Track 2.
+
+### Settings
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.0
+
+### Result
+- The vehicle started successfully in autonomous mode.
+- However, it collided with the track boundary at approximately the same
+  location as the earlier Run 2 test.
+- A complete autonomous lap was not achieved.
+
+### Evaluation
+Adding Track 2 training data exposed the model to the visual characteristics
+of both simulator environments, but this was not sufficient to achieve
+successful autonomous driving on Track 2.
+
+The experiments demonstrated that low validation loss did not necessarily
+correspond to reliable simulator performance. Further improvement would
+require additional targeted Track 2 data, more extensive hyperparameter
+tuning, and potentially changes to the model architecture or training
+strategy.
+
+Track 1:
+Final combined model → gets substantially through the track, reaches the long straight, then crashes.
+
+Track 2:
+Run 2 → crashes early.
+Final combined model → still crashes at the same location.
