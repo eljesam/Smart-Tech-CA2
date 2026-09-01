@@ -18,65 +18,31 @@ from model import build_model
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data" / "raw"
-CSV_PATH = DATA_DIR / "driving_log_run4_balanced.csv"
-
 MODEL_DIR = BASE_DIR / "models"
-MODEL_DIR.mkdir(exist_ok=True)
 
-MODEL_PATH = MODEL_DIR / "self_driving_model_run4.keras"
+CSV_PATH = DATA_DIR / "driving_log_run5_balanced.csv"
+
+MODEL_PATH = MODEL_DIR / "self_driving_model_run5.keras"
+PLOT_PATH = MODEL_DIR / "training_loss_run5.png"
+
+
+
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
 # Training settings
 
-
 BATCH_SIZE = 32
 EPOCHS = 20
+VALIDATION_SPLIT = 0.20
 
-
+RANDOM_STATE = 42
 
 # Training generator
 
 
 def training_generator(dataframe, batch_size=32):
-  
-    while True:
-
-        batch_indices = np.random.choice(
-            len(dataframe),
-            batch_size,
-            replace=True
-        )
-
-        images = []
-        steering_angles = []
-
-        for index in batch_indices:
-
-            row = dataframe.iloc[index]
-
-            # Random camera selection
-         
-            image, steering = augment_sample(row)
-
-            # Crop, resize, convert RGB -> YUV
-            image = preprocess_image(image)
-
-            images.append(image)
-            steering_angles.append(steering)
-
-        yield (
-            np.array(images, dtype=np.float32),
-            np.array(steering_angles, dtype=np.float32)
-        )
-
-
-# Validation generator
-
-
-def validation_generator(dataframe, batch_size=32):
- 
-    current_index = 0
 
     while True:
 
@@ -85,87 +51,178 @@ def validation_generator(dataframe, batch_size=32):
 
         for _ in range(batch_size):
 
+            # Randomly select a row
+            index = np.random.randint(
+                0,
+                len(dataframe)
+            )
+
+            row = dataframe.iloc[index]
+
+            # Apply augmentation
+            image, steering = augment_sample(row)
+
+            # Apply image preprocessing
+            image = preprocess_image(image)
+
+            images.append(image)
+            steering_angles.append(steering)
+
+        X_batch = np.array(
+            images,
+            dtype=np.float32
+        )
+
+        y_batch = np.array(
+            steering_angles,
+            dtype=np.float32
+        )
+
+        yield X_batch, y_batch
+
+
+# Validation generator
+
+
+def validation_generator(dataframe, batch_size=32):
+ 
+ current_index = 0
+
+ while True:
+
+        images = []
+        steering_angles = []
+
+        for _ in range(batch_size):
+
+            # Restart from beginning when end is reached
             if current_index >= len(dataframe):
                 current_index = 0
 
             row = dataframe.iloc[current_index]
 
+            # Load center camera image
             image = load_image(
                 row["center"]
+            )
+
+            # Apply preprocessing only
+            image = preprocess_image(
+                image
             )
 
             steering = float(
                 row["steering"]
             )
 
-            image = preprocess_image(image)
-
             images.append(image)
             steering_angles.append(steering)
 
             current_index += 1
 
-        yield (
-            np.array(images, dtype=np.float32),
-            np.array(steering_angles, dtype=np.float32)
+        X_batch = np.array(
+            images,
+            dtype=np.float32
         )
+
+        y_batch = np.array(
+            steering_angles,
+            dtype=np.float32
+        )
+
+        yield X_batch, y_batch
 
 
 
 # Load dataset
+print("\n========================================")
+print("RUN 5 TRAINING")
+print("========================================")
+
+print("\nLoading dataset:")
+print(CSV_PATH)
+
+if not CSV_PATH.exists():
+    raise FileNotFoundError(
+        f"Run 5 dataset was not found:\n{CSV_PATH}"
+    )
 
 
-df = pd.read_csv(CSV_PATH)
+df = pd.read_csv(
+    CSV_PATH
+)
 
-print("Total balanced samples:", len(df))
+
+print("\nDataset loaded successfully.")
+print("Total samples:", len(df))
+
+print("\nDataset columns:")
+print(df.columns.tolist())
 
 
 # Train / validation split
 
-
-train_df, val_df = train_test_split(
+train_df, validation_df = train_test_split(
     df,
-    test_size=0.2,
-    random_state=42,
+    test_size=VALIDATION_SPLIT,
+    random_state=RANDOM_STATE,
     shuffle=True
 )
 
-print("Training samples:", len(train_df))
-print("Validation samples:", len(val_df))
 
+# Reset indexes
+train_df = train_df.reset_index(
+    drop=True
+)
 
+validation_df = validation_df.reset_index(
+    drop=True
+)
+print("\n========================================")
+print("DATA SPLIT")
+print("========================================")
+
+print(
+    "Training samples:",
+    len(train_df)
+)
+
+print(
+    "Validation samples:",
+    len(validation_df)
+)
+
+train_generator = training_generator(
+    train_df,
+    BATCH_SIZE
+)
+
+val_generator = validation_generator(
+    validation_df,
+    BATCH_SIZE
+)
 
 # Calculate training steps
 
 
-STEPS_PER_EPOCH = max(
+steps_per_epoch = max(
     1,
     len(train_df) // BATCH_SIZE
 )
 
-VALIDATION_STEPS = max(
+validation_steps = max(
     1,
-    len(val_df) // BATCH_SIZE
+    len(validation_df) // BATCH_SIZE
 )
 
-print("Steps per epoch:", STEPS_PER_EPOCH)
-print("Validation steps:", VALIDATION_STEPS)
 
+print("\nSteps per epoch:",
+      steps_per_epoch)
 
-
-# Create generators
-
-
-train_gen = training_generator(
-    train_df,
-    batch_size=BATCH_SIZE
+print(
+    "Validation steps:",
+    validation_steps
 )
-
-val_gen = validation_generator(
-    val_df,
-    batch_size=BATCH_SIZE
-)
-
 
 
 # Build model
@@ -185,14 +242,23 @@ model.summary()
 early_stopping = EarlyStopping(
     monitor="val_loss",
     patience=3,
-    restore_best_weights=True
+    restore_best_weights=True,
+    verbose=1
 )
 
-checkpoint = ModelCheckpoint(
-    filepath=str(MODEL_PATH),
+
+model_checkpoint = ModelCheckpoint(
+    filepath=MODEL_PATH,
     monitor="val_loss",
-    save_best_only=True
+    save_best_only=True,
+    verbose=1
 )
+
+callbacks = [
+    early_stopping,
+    model_checkpoint
+]
+
 
 
 
@@ -201,18 +267,23 @@ checkpoint = ModelCheckpoint(
 
 print("\nStarting training...\n")
 
-history = model.fit(
-    train_gen,
-    steps_per_epoch=STEPS_PER_EPOCH,
-    validation_data=val_gen,
-    validation_steps=VALIDATION_STEPS,
-    epochs=EPOCHS,
-    callbacks=[
-        early_stopping,
-        checkpoint
-    ]
-)
 
+history = model.fit(
+
+    train_generator,
+
+    steps_per_epoch=steps_per_epoch,
+
+    validation_data=val_generator,
+
+    validation_steps=validation_steps,
+
+    epochs=EPOCHS,
+
+    callbacks=callbacks,
+
+    verbose=1
+)
 
 
 # Save final model
@@ -222,38 +293,87 @@ model.save(MODEL_PATH)
 print("\nModel saved to:")
 print(MODEL_PATH)
 
+# Training statistics
 
+training_loss = history.history[
+    "loss"
+]
+
+validation_loss = history.history[
+    "val_loss"
+]
+
+
+best_epoch = (
+    np.argmin(validation_loss) + 1
+)
+
+best_validation_loss = np.min(
+    validation_loss
+)
+print("\n========================================")
+print("RUN 5 RESULTS")
+print("========================================")
+
+print(
+    f"Epochs completed: "
+    f"{len(training_loss)}"
+)
+
+print(
+    f"Best epoch: "
+    f"{best_epoch}"
+)
+
+print(
+    f"Best validation loss: "
+    f"{best_validation_loss:.6f}"
+)
 
 # Plot training and validation loss
 
 
-plt.figure(figsize=(10, 5))
+plt.figure(
+    figsize=(10, 6)
+)
 
 plt.plot(
-    history.history["loss"],
+    training_loss,
     label="Training Loss"
 )
 
 plt.plot(
-    history.history["val_loss"],
+    validation_loss,
     label="Validation Loss"
 )
 
-plt.title("Training and Validation Loss")
-plt.xlabel("Epoch")
-plt.ylabel("Mean Squared Error")
-plt.legend()
-plt.grid()
-
-plot_path = MODEL_DIR / "training_loss_run4.png"
-
-plt.savefig(
-    plot_path,
-    bbox_inches="tight"
+plt.title(
+    "Run 5 - Training and Validation Loss"
 )
 
-print("\nTraining graph saved to:")
-print(plot_path)
+plt.xlabel(
+    "Epoch"
+)
+
+plt.ylabel(
+    "Mean Squared Error Loss"
+)
+
+plt.legend()
+
+plt.grid(True)
+
+plt.tight_layout()
+
+
+plt.savefig(
+    PLOT_PATH
+)
+
+
+print("\nTraining graph saved:")
+print(PLOT_PATH)
+
 
 plt.show()
 
@@ -261,19 +381,31 @@ plt.show()
 
 # Print training summary
 
+print("\n========================================")
+print("RUN 5 TRAINING COMPLETE")
+print("========================================")
 
-best_val_loss = min(
-    history.history["val_loss"]
+print(
+    f"Training samples: {len(train_df)}"
 )
 
-best_epoch = (
-    history.history["val_loss"].index(
-        best_val_loss
-    ) + 1
+print(
+    f"Validation samples: {len(validation_df)}"
 )
 
-print("\nTraining Summary")
-print("----------------")
-print("Epochs completed:", len(history.history["loss"]))
-print("Best epoch:", best_epoch)
-print("Best validation loss:", best_val_loss)
+print(
+    f"Best epoch: {best_epoch}"
+)
+
+print(
+    f"Best validation loss: "
+    f"{best_validation_loss:.6f}"
+)
+
+print(
+    f"Model: {MODEL_PATH.name}"
+)
+
+print(
+    f"Loss graph: {PLOT_PATH.name}"
+)
