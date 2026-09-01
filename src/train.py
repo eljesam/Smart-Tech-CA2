@@ -11,6 +11,8 @@ from preprocessing import load_image, preprocess_image
 from augmentation import augment_sample
 from model import build_model
 
+from keras.models import load_model
+from keras.optimizers import Adam
 
 # Project paths
 
@@ -20,11 +22,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data" / "raw"
 MODEL_DIR = BASE_DIR / "models"
 
-CSV_PATH = DATA_DIR / "driving_log_run5_balanced.csv"
+CSV_PATH = DATA_DIR / "driving_log_run6_finetune.csv"
 
-MODEL_PATH = MODEL_DIR / "self_driving_model_run5.keras"
-PLOT_PATH = MODEL_DIR / "training_loss_run5.png"
+BASE_MODEL_PATH = (
+    MODEL_DIR / "self_driving_model_run2.keras"
+)
 
+MODEL_PATH = (
+    MODEL_DIR / "self_driving_model_run6.keras"
+)
+
+PLOT_PATH = (
+    MODEL_DIR / "training_loss_run6.png"
+)
 
 
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -34,7 +44,7 @@ MODEL_DIR.mkdir(parents=True, exist_ok=True)
 # Training settings
 
 BATCH_SIZE = 32
-EPOCHS = 20
+EPOCHS = 8
 VALIDATION_SPLIT = 0.20
 
 RANDOM_STATE = 42
@@ -230,9 +240,15 @@ print(
 
 print("\nBuilding model...\n")
 
-model = build_model()
+model = load_model(
+    BASE_MODEL_PATH,
+    compile=False
+)
 
-model.summary()
+model.compile(
+    optimizer=Adam(learning_rate=0.00001),
+    loss="mse"
+)
 
 
 
