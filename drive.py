@@ -36,7 +36,7 @@ TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.15
 
 STEERING_GAIN = 1.0
-STEERING_DEADZONE = 0.03
+STEERING_BIAS = 0.0
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
@@ -102,15 +102,11 @@ def telemetry(sid, data):
         verbose=0
     )
 
-    raw_steering = float(
+    steering_angle = float(
         prediction[0][0]
     )
 
-    steering_angle = raw_steering
-
-    if abs(steering_angle) < STEERING_DEADZONE:
-     steering_angle = 0.0
-
+    
     steering_angle *= STEERING_GAIN
    
 
@@ -128,7 +124,6 @@ def telemetry(sid, data):
 
     print(
         f"Speed: {speed:6.2f} | "
-        f"Raw: {raw_steering:7.4f} | "
         f"Steering: {steering_angle:7.4f} | "
         f"Throttle: {throttle:.2f}"
     )
