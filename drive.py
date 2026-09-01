@@ -1,5 +1,4 @@
 import base64
-
 from io import BytesIO
 from pathlib import Path
 
@@ -9,71 +8,97 @@ import numpy as np
 import socketio
 
 from flask import Flask
-from keras.models import load_model
 from PIL import Image
+from keras.models import load_model
 
 from src.preprocessing import preprocess_image
 
-#Socket.IO/Flask setup
-sio = socketio.Server(
-    async_mode="eventlet",
-    cors_allowed_origins="*"
-)
 
-flask_app = Flask(__name__)
-
-#Project Paths
 BASE_DIR = Path(__file__).resolve().parent
 
 MODEL_PATH = (
     BASE_DIR
     / "models"
-    / "self_driving_model_run5.keras"
+    / "self_driving_model_run2.keras"
 )
 
-TARGET_SPEED = 10.0
+TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.15
-STEERING_GAIN = 2.0
+STEERING_GAIN = 1.0
 
-# Control Function
-def send_control(sid, steering_angle, throttle):
-   
+sio = socketio.Server(
+    async_mode="eventlet",
+    cors_allowed_origins="*"
+)
+
+app = Flask(__name__)
+
+
+print("\n========================================")
+print("LOADING RUN 2 MODEL")
+print("========================================")
+
+if not MODEL_PATH.exists():
+    raise FileNotFoundError(
+        f"Run 2 model not found:\n{MODEL_PATH}"
+    )
+
+model = load_model(
+    MODEL_PATH,
+    compile=False
+)
+
+print("\nRun 2 model loaded successfully.")
+print(MODEL_PATH)
+
+
+def send_control(
+    sid,
+    steering_angle,
+    throttle
+):
+
     sio.emit(
         "steer",
         data={
             "steering_angle": str(steering_angle),
             "throttle": str(throttle)
         },
-        to=sid
+        room=sid
     )
 
-# Simulator connection
-@sio.event
+
+@sio.on("connect")
 def connect(sid, environ):
-    
-    print("Simulator connected.")
+
+    print("\n========================================")
+    print("SIMULATOR CONNECTED")
+    print("========================================")
 
     send_control(
         sid,
-        steering_angle=0.0,
-        throttle=0.0
+        0.0,
+        0.0
     )
+
 
 @sio.on("telemetry")
 def telemetry(sid, data):
-  
+
     if not data:
+
         sio.emit(
             "manual",
             data={},
-            to=sid
+            room=sid
         )
+
         return
 
-    # Current simulator speed
-    speed = float(data["speed"])
+    speed = float(
+        data["speed"]
+    )
 
-    # Decode the center camera image
     image_data = base64.b64decode(
         data["image"]
     )
@@ -82,30 +107,32 @@ def telemetry(sid, data):
         BytesIO(image_data)
     )
 
-    image = np.asarray(image)
+    image = np.asarray(
+        image
+    )
 
-    
-    image = preprocess_image(image)
+    image = preprocess_image(
+        image
+    )
 
-  
     image = np.expand_dims(
         image,
         axis=0
-    ).astype(np.float32)
+    )
 
-    # Predict steering angle
     prediction = model.predict(
         image,
         verbose=0
     )
 
-    steering_angle = float(
+    raw_steering = float(
         prediction[0][0]
     )
 
-    
-    steering_angle *= STEERING_GAIN
-   
+    steering_angle = (
+        raw_steering
+        * STEERING_GAIN
+    )
 
     steering_angle = np.clip(
         steering_angle,
@@ -113,7 +140,6 @@ def telemetry(sid, data):
         1.0
     )
 
-    # Simple speed controller
     if speed < TARGET_SPEED:
         throttle = THROTTLE_VALUE
     else:
@@ -121,7 +147,8 @@ def telemetry(sid, data):
 
     print(
         f"Speed: {speed:6.2f} | "
-        f"Steering: {steering_angle:7.4f} | "
+        f"Raw steering: {raw_steering:7.4f} | "
+        f"Final steering: {steering_angle:7.4f} | "
         f"Throttle: {throttle:.2f}"
     )
 
@@ -131,28 +158,29 @@ def telemetry(sid, data):
         throttle
     )
 
+
 if __name__ == "__main__":
 
-    print("Loading model:")
-    print(MODEL_PATH)
-
-    model = load_model(
-        MODEL_PATH,
-        compile=False
-    )
-
-    print("Model loaded successfully.")
-    print("Waiting for simulator...")
-    print("Port: 4567")
-
-    app = socketio.WSGIApp(
+    wrapped_app = socketio.WSGIApp(
         sio,
-        flask_app
+        app
     )
+
+    print("\n========================================")
+    print("RUN 2 AUTONOMOUS DRIVING")
+    print("========================================")
+
+    print(f"Model: {MODEL_PATH.name}")
+    print(f"Target speed: {TARGET_SPEED}")
+    print(f"Throttle: {THROTTLE_VALUE}")
+    print(f"Steering gain: {STEERING_GAIN}")
+
+    print("\nListening on port 4567...")
+    print("Start the simulator in Autonomous Mode.\n")
 
     eventlet.wsgi.server(
         eventlet.listen(
             ("", 4567)
         ),
-        app
+        wrapped_app
     )
