@@ -31,9 +31,9 @@ MODEL_PATH = (
     / "self_driving_model_run5.keras"
 )
 
-TARGET_SPEED = 8.0
+TARGET_SPEED = 10.0
 THROTTLE_VALUE = 0.15
-STEERING_GAIN = 1.0
+STEERING_GAIN = 2.0
 
 # Control Function
 def send_control(sid, steering_angle, throttle):

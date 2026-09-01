@@ -268,3 +268,30 @@ successfully negotiated both early corners.
 
 Further dataset balancing changes were therefore stopped and attention was
 returned to the specific straight-road drift observed in Run 2.
+
+## Run 5 - Targeted Straight Recovery Data
+
+### Changes
+- Added 2,093 targeted driving records from the straight/recovery section.
+- Preserved all non-zero steering samples.
+- Reduced redundant zero-steering samples.
+- Final training dataset contained 3,869 samples.
+- CNN architecture and hyperparameters remained unchanged.
+
+### Training Result
+- Best validation loss: approximately 0.0985
+- Training and validation loss remained relatively stable.
+- No significant overfitting was observed.
+
+### Simulator Result
+- The vehicle failed at the first major turn on Track 1.
+
+### Conclusion
+Although Run 5 achieved a low validation loss, autonomous driving performance
+was worse than Run 2.
+
+The additional balancing and recovery data changed the learned steering
+behaviour enough to reduce the model's ability to negotiate the first corner.
+
+This again demonstrates that validation loss alone is not sufficient to select
+the final driving model.
