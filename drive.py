@@ -28,15 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = (
     BASE_DIR
     / "models"
-    / "self_driving_model_run2.keras"
+    / "self_driving_model_run5.keras"
 )
 
-#Driving settings
 TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.15
-
 STEERING_GAIN = 1.0
-STEERING_BIAS = 0.0
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
