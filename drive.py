@@ -28,14 +28,15 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = (
     BASE_DIR
     / "models"
-    / "self_driving_model.keras"
+    / "self_driving_model_run2.keras"
 )
 
 #Driving settings
 TARGET_SPEED = 8.0
 THROTTLE_VALUE = 0.20
 
-STEERING_GAIN = 2.0
+STEERING_GAIN = 1.0
+STEERING_BIAS = 0.03
 
 # Control Function
 def send_control(sid, steering_angle, throttle):
@@ -104,6 +105,8 @@ def telemetry(sid, data):
     steering_angle = float(
         prediction[0][0]
     )
+    steering_angle *= STEERING_GAIN
+    steering_angle += STEERING_BIAS
 
     steering_angle = np.clip(
         steering_angle,
