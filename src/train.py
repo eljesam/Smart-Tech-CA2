@@ -18,12 +18,12 @@ from model import build_model
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data" / "raw"
-CSV_PATH = DATA_DIR / "driving_log_run3_balanced.csv"
+CSV_PATH = DATA_DIR / "driving_log_run4_balanced.csv"
 
 MODEL_DIR = BASE_DIR / "models"
 MODEL_DIR.mkdir(exist_ok=True)
 
-MODEL_PATH = MODEL_DIR / "self_driving_model_run3.keras"
+MODEL_PATH = MODEL_DIR / "self_driving_model_run4.keras"
 
 
 
@@ -245,7 +245,7 @@ plt.ylabel("Mean Squared Error")
 plt.legend()
 plt.grid()
 
-plot_path = MODEL_DIR / "training_loss_run3.png"
+plot_path = MODEL_DIR / "training_loss_run4.png"
 
 plt.savefig(
     plot_path,
