@@ -69,6 +69,53 @@ Changes considered:
 - Test a steering gain before retraining.
 - If necessary, add more targeted corner data or adjust model/training parameters.
 
+Next test:
+- Reduce target speed to 8.
+- Keep steering gain at 1.5.
+- Determine whether the second-turn failure is caused by insufficient
+reaction time or inadequate steering prediction.
+### Run 1 - Final Simulator Result
+
+Training:
+- Balanced samples: 1,649
+- Training samples: 1,319
+- Validation samples: 330
+- Best epoch: 6
+- Best validation loss: 0.1697
+
+Simulator testing:
+
+Test 1:
+- Target speed: 12
+- Steering gain: 1.0
+- Result: Failed at first turn and entered the water.
+
+Test 2:
+- Target speed: 12
+- Steering gain: 1.5
+- Result: Passed the first turn but failed at the second turn.
+
+Test 3:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 1.5
+- Result: Failed at the second turn.
+
+Test 4:
+- Target speed: 8
+- Throttle: 0.15
+- Steering gain: 2.0
+- Result: Failed at the second turn.
+
+Conclusion:
+Increasing steering gain improved the first-turn response, but the vehicle
+continued to fail at the second turn. Reducing speed did not resolve the
+problem. This suggests that the CNN did not learn a sufficiently strong or
+accurate representation of the second corner.
+
+Run 2 will therefore focus on improving the training data rather than
+further increasing the steering gain.
+
 ### Simulator Test - Track 2
 Status: Not tested yet
 
